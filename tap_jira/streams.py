@@ -1752,7 +1752,7 @@ class IssueStream(JiraStream):
         else:
             params.pop("jql")  # drop if there's no query
 
-        self.logger.debug("QUERY PARAMS: %s", params)
+        self.logger.info("QUERY PARAMS: %s", params)
 
         return params
 
