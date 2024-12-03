@@ -30,16 +30,10 @@ def _generate_deep_adf_schema_estimation(depth: int):
         Property("colspan", IntegerType),
         Property("alt", StringType),
         Property("timestamp", StringType),
-        Property(
-            "colwidth",
-            ArrayType(IntegerType),
-        ),
+        Property("colwidth", ArrayType(IntegerType)),
         Property("language", StringType),
         Property("background", StringType),
-        Property(
-            "isNumberColumnEnabled",
-            BooleanType,
-        ),
+        Property("isNumberColumnEnabled", BooleanType),
         Property("localId", StringType),
         Property("color", StringType),
         Property("panelType", StringType),
@@ -74,6 +68,7 @@ def _generate_deep_adf_schema_estimation(depth: int):
             ),
         ),
     )
+
     if depth > 0:
         result.wrapped["content"] = Property(
             "content",
@@ -81,6 +76,7 @@ def _generate_deep_adf_schema_estimation(depth: int):
                 _generate_deep_adf_schema_estimation(depth - 1)
             )
         )
+
     return result
 
 
@@ -450,16 +446,10 @@ class IssueStream(JiraStream):
         Property("colspan", IntegerType),
         Property("alt", StringType),
         Property("timestamp", StringType),
-        Property(
-            "colwidth",
-            ArrayType(IntegerType),
-        ),
+        Property("colwidth", ArrayType(IntegerType)),
         Property("language", StringType),
         Property("background", StringType),
-        Property(
-            "isNumberColumnEnabled",
-            BooleanType,
-        ),
+        Property("isNumberColumnEnabled", BooleanType),
         Property("localId", StringType),
         Property("color", StringType),
         Property("panelType", StringType),
@@ -749,9 +739,7 @@ class IssueStream(JiraStream):
                                                     Property("avatarId", IntegerType),
                                                     Property("description", StringType),
                                                     Property("entityId", StringType),
-                                                    Property(
-                                                        "hierarchyLevel", IntegerType
-                                                    ),
+                                                    Property("hierarchyLevel", IntegerType),
                                                     Property("iconUrl", StringType),
                                                     Property("id", StringType),
                                                     Property("name", StringType),
@@ -779,17 +767,11 @@ class IssueStream(JiraStream):
                                                     Property(
                                                         "statusCategory",
                                                         ObjectType(
-                                                            Property(
-                                                                "colorName", StringType
-                                                            ),
+                                                            Property("colorName", StringType),
                                                             Property("id", IntegerType),
                                                             Property("key", StringType),
-                                                            Property(
-                                                                "name", StringType
-                                                            ),
-                                                            Property(
-                                                                "self", StringType
-                                                            ),
+                                                            Property("name", StringType),
+                                                            Property("self", StringType),
                                                         ),
                                                     ),
                                                 ),
@@ -814,9 +796,7 @@ class IssueStream(JiraStream):
                                                     Property("avatarId", IntegerType),
                                                     Property("description", StringType),
                                                     Property("entityId", StringType),
-                                                    Property(
-                                                        "hierarchyLevel", IntegerType
-                                                    ),
+                                                    Property("hierarchyLevel", IntegerType),
                                                     Property("iconUrl", StringType),
                                                     Property("id", StringType),
                                                     Property("name", StringType),
@@ -844,17 +824,11 @@ class IssueStream(JiraStream):
                                                     Property(
                                                         "statusCategory",
                                                         ObjectType(
-                                                            Property(
-                                                                "colorName", StringType
-                                                            ),
+                                                            Property("colorName", StringType),
                                                             Property("id", IntegerType),
                                                             Property("key", StringType),
-                                                            Property(
-                                                                "name", StringType
-                                                            ),
-                                                            Property(
-                                                                "self", StringType
-                                                            ),
+                                                            Property("name", StringType),
+                                                            Property("self", StringType),
                                                         ),
                                                     ),
                                                 ),
@@ -1145,60 +1119,24 @@ class IssueStream(JiraStream):
                 Property("customfield_10600", base_item_schema),
                 Property("customfield_11490", base_item_schema),
                 Property("customfield_11492", StringType),
-                Property(
-                    "customfield_11371",
-                    base_item_schema,
-                ),
-                Property(
-                    "customfield_11370",
-                    base_item_schema,
-                ),
+                Property("customfield_11371", base_item_schema),
+                Property("customfield_11370", base_item_schema),
                 Property("customfield_11491", base_item_schema),
-                Property(
-                    "customfield_11373",
-                    base_item_schema,
-                ),
-                Property(
-                    "customfield_11494",
-                    base_item_schema,
-                ),
-                Property(
-                    "customfield_11493",
-                    base_item_schema,
-                ),
-                Property(
-                    "customfield_11372",
-                    base_item_schema,
-                ),
-                Property(
-                    "customfield_11496",
-                    base_item_schema,
-                ),
-                Property(
-                    "customfield_11375",
-                    base_item_schema,
-                ),
-                Property(
-                    "customfield_11495",
-                    base_item_schema,
-                ),
-                Property(
-                    "customfield_11374",
-                    base_item_schema,
-                ),
-                Property(
-                    "customfield_11498",
-                    base_item_schema,
-                ),
+                Property("customfield_11373", base_item_schema),
+                Property("customfield_11494", base_item_schema),
+                Property("customfield_11493", base_item_schema),
+                Property("customfield_11372", base_item_schema),
+                Property("customfield_11496", base_item_schema),
+                Property("customfield_11375", base_item_schema),
+                Property("customfield_11495", base_item_schema),
+                Property("customfield_11374", base_item_schema),
+                Property("customfield_11498", base_item_schema),
                 Property("customfield_11377", StringType),
                 Property("customfield_11497", NumberType),
                 Property("customfield_11376", StringType),
                 Property("customfield_11379", ArrayType(base_item_schema)),
                 Property("customfield_11378", ArrayType(base_item_schema)),
-                Property(
-                    "customfield_11369",
-                    base_item_schema,
-                ),
+                Property("customfield_11369", base_item_schema),
                 Property("customfield_11481", ArrayType(base_item_schema)),
                 Property("customfield_11482", base_item_schema),
                 Property("customfield_11485", StringType),
@@ -1284,10 +1222,7 @@ class IssueStream(JiraStream):
                     ),
                 ),
                 Property("customfield_11452", base_item_schema),
-                Property(
-                    "customfield_11330",
-                    ObjectType(Property("errorMessage", StringType)),
-                ),
+                Property("customfield_11330", ObjectType(Property("errorMessage", StringType))),
                 Property("customfield_11451", StringType),
                 Property("customfield_11454", base_item_schema),
                 Property("customfield_11333", base_item_schema),
@@ -1296,10 +1231,7 @@ class IssueStream(JiraStream):
                 Property("customfield_11332", StringType),
                 Property("customfield_11335", base_content_schema),
                 Property("customfield_11576", StringType),
-                Property(
-                    "customfield_11334",
-                    base_item_schema,
-                ),
+                Property("customfield_11334", base_item_schema),
                 Property("customfield_11342", base_item_schema),
                 Property("customfield_11455", ArrayType(base_item_schema)),
                 Property("customfield_11326", ArrayType(base_item_schema)),
@@ -1308,26 +1240,14 @@ class IssueStream(JiraStream):
                 Property("customfield_11567", NumberType),
                 Property("customfield_11446", ArrayType(base_item_schema)),
                 Property("customfield_11325", ArrayType(base_item_schema)),
-                Property(
-                    "customfield_11328",
-                    ObjectType(Property("errorMessage", StringType)),
-                ),
+                Property("customfield_11328", ObjectType(Property("errorMessage", StringType))),
                 Property("customfield_11449", ArrayType(base_item_schema)),
-                Property(
-                    "customfield_11327",
-                    ObjectType(Property("errorMessage", StringType)),
-                ),
+                Property("customfield_11327", ObjectType(Property("errorMessage", StringType))),
                 Property("customfield_11448", ArrayType(base_item_schema)),
-                Property(
-                    "customfield_11329",
-                    ObjectType(Property("errorMessage", StringType)),
-                ),
+                Property("customfield_11329", ObjectType(Property("errorMessage", StringType))),
                 Property("customfield_11560", StringType),
                 Property("customfield_11441", StringType),
-                Property(
-                    "customfield_11562",
-                    base_item_schema,
-                ),
+                Property("customfield_11562", base_item_schema),
                 Property("customfield_11320", base_item_schema),
                 Property("customfield_11561", base_content_schema),
                 Property("customfield_11443", StringType),
@@ -1406,9 +1326,7 @@ class IssueStream(JiraStream):
                             "requestType",
                             ObjectType(
                                 Property("_expands", ArrayType(StringType)),
-                                Property(
-                                    "_links", ObjectType(Property("self", StringType))
-                                ),
+                                Property("_links", ObjectType(Property("self", StringType))),
                                 Property("description", StringType),
                                 Property("groupIds", ArrayType(StringType)),
                                 Property("id", StringType),
