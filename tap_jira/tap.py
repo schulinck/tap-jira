@@ -35,17 +35,14 @@ class TapJira(Tap):
             th.StringType,
             description="Jira API Token.",
             required=True,
+            secret=True,
+            title="API Token",
         ),
         th.Property(
             "email",
             th.StringType,
             description="The user email for your Jira account.",
             required=True,
-        ),
-        th.Property(
-            "tz",
-            th.StringType,
-            description="Timezone to use when JQL filtering by time",
         ),
         th.Property(
             "page_size",
@@ -58,6 +55,31 @@ class TapJira(Tap):
                 ),
             ),
         ),
+        th.Property(
+            "stream_options",
+            th.ObjectType(
+                th.Property(
+                    "issues",
+                    th.ObjectType(
+                        th.Property(
+                            "jql",
+                            th.StringType,
+                            description="A JQL query to filter issues",
+                            title="JQL Query",
+                        ),
+                    ),
+                    title="Issues Stream Options",
+                    description="Options specific to the issues stream",
+                ),
+            ),
+            description="Options for individual streams",
+        ),
+        th.Property(
+            "include_audit_logs",
+            th.BooleanType,
+            description="Include the audit logs stream",
+            default=False,
+        ),
     ).to_dict()
 
     def discover_streams(self) -> list[streams.JiraStream]:
@@ -66,7 +88,7 @@ class TapJira(Tap):
         Returns:
             A list of discovered streams.
         """
-        return [
+        stream_list = [
             streams.UsersStream(self),
             streams.FieldStream(self),
             streams.ServerInfoStream(self),
@@ -80,7 +102,6 @@ class TapJira(Tap):
             streams.PermissionHolderStream(self),
             streams.SprintStream(self),
             streams.ProjectRoleActorStream(self),
-            streams.AuditingStream(self),
             streams.DashboardStream(self),
             streams.FilterSearchStream(self),
             streams.FilterDefaultShareScopeStream(self),
@@ -99,6 +120,7 @@ class TapJira(Tap):
             streams.IssueWorklogs(self),
         ]
 
+        if self.config.get("include_audit_logs", False):
+            stream_list.append(streams.AuditingStream(self))
 
-if __name__ == "__main__":
-    TapJira.cli()
+        return stream_list
