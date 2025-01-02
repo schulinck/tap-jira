@@ -1650,6 +1650,12 @@ class IssueStream(JiraStream):
         ),
         Property("created", DateTimeType),
         Property("updated", DateTimeType),
+        Property(
+            "renderedFields",
+            ObjectType(
+                Property("description", StringType),
+            ),
+        ),
     ).to_dict()
 
     def get_url_params(
@@ -3094,7 +3100,7 @@ class IssueComments(JiraStream):
 
     ignore_parent_replication_keys = True
 
-    path = "/issue/{issue_id}/comment"
+    path = "/issue/{issue_id}/comment?expand=renderedBody"
 
     primary_keys = ("id",)
 
@@ -3155,18 +3161,6 @@ class IssueComments(JiraStream):
         Property("renderedBody", StringType),
         Property("jsdPublic", BooleanType),
     ).to_dict()
-
-    def get_url_params(
-        self,
-        context: dict | None,  # noqa: ARG002
-        next_page_token: t.Any | None,  # noqa: ANN401
-    ) -> dict[str, t.Any]:
-        """Return a dictionary of query parameters."""
-        params: dict = {}
-
-        params["expand"] = "renderedFields"
-
-        return params
 
     def post_process(self, row: dict, context: dict) -> dict:
         """Post-process the record before it is returned."""
