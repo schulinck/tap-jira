@@ -5,6 +5,7 @@ from __future__ import annotations
 import functools
 import operator
 import typing as t
+from zoneinfo import ZoneInfo
 
 from singer_sdk import typing as th  # JSON Schema typing helpers
 
@@ -1670,6 +1671,15 @@ class IssueStream(JiraStream):
 
         jql: list[str] = []
         params["expand"] = "renderedFields"
+
+        replication_value = self.get_starting_timestamp(context)
+        if replication_value:
+            timezone_name = self.config["tz"] or "UTC"
+            tz = ZoneInfo(timezone_name)
+            formatted_replication_value = replication_value.astimezone(tz).strftime(
+                "%Y-%m-%d %H:%M",
+            )
+            jql.append(f"(updated >= '{formatted_replication_value}')")
 
         if next_page_token:
             params["startAt"] = next_page_token
