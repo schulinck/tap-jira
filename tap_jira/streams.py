@@ -1660,7 +1660,7 @@ class IssueStream(JiraStream):
 
     def get_url_params(
         self,
-        context: dict | None,  # noqa: ARG002
+        context: dict | None,
         next_page_token: t.Any | None,  # noqa: ANN401
     ) -> dict[str, t.Any]:
         """Return a dictionary of query parameters."""
@@ -1704,8 +1704,8 @@ class IssueStream(JiraStream):
         """Return a context dictionary for child streams."""
         return {"issue_id": record["id"]}
 
-    def post_process(self, row: dict, context: dict | None = None) -> dict | None:
-        # move these fields so they can be used as replication keys
+    def post_process(self, row: dict, context: dict | None = None) -> dict | None:  # noqa: ARG002
+        """Move these fields up so they can be used as replication keys."""
         row["updated"] = row["fields"]["updated"]
         row["created"] = row["fields"]["created"]
 
