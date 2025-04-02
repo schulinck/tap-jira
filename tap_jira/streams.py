@@ -5,8 +5,8 @@ from __future__ import annotations
 import functools
 import operator
 import typing as t
-from zoneinfo import ZoneInfo
 from http import HTTPStatus
+from zoneinfo import ZoneInfo
 
 from singer_sdk import typing as th  # JSON Schema typing helpers
 
