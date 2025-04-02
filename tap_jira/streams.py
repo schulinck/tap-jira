@@ -6,6 +6,7 @@ import functools
 import operator
 import typing as t
 from zoneinfo import ZoneInfo
+from http import HTTPStatus
 
 from singer_sdk import typing as th  # JSON Schema typing helpers
 
@@ -13,6 +14,7 @@ from tap_jira.client import JiraStream
 
 if t.TYPE_CHECKING:
     import requests
+    from singer_sdk.helpers.types import Context, Record
 
 PropertiesList = th.PropertiesList
 Property = th.Property
@@ -147,10 +149,7 @@ class FieldStream(JiraStream):
                         Property("customRenderer", BooleanType),
                         Property("readOnly", BooleanType),
                         Property("environment", StringType),
-                        Property(
-                            "com.atlassian.jira.plugin.system.customfieldtypes:atlassian-team",
-                            BooleanType,
-                        ),
+                        Property("atlassian_team", BooleanType),
                     ),
                 ),
             ),
@@ -1647,6 +1646,7 @@ class IssueStream(JiraStream):
                 Property("editmeta", StringType),
                 Property("histories", StringType),
                 Property("customfield_11596", StringType),
+                additional_properties=False,
             ),
         ),
         Property("created", DateTimeType),
@@ -1710,16 +1710,22 @@ class IssueStream(JiraStream):
 
         return params
 
+    def post_process(self, row: Record, context: Context | None = None) -> Record:  # noqa: ARG002
+        """Post-process the record.
+
+        - Add top-level `created` and `updated` fields.
+        """
+        created = row.get("fields", {}).pop("created", None)
+        updated = row.get("fields", {}).pop("updated", None)
+
+        row["created"] = created
+        row["updated"] = updated
+
+        return row
+
     def get_child_context(self, record: dict, context: dict | None) -> dict:  # noqa: ARG002
         """Return a context dictionary for child streams."""
         return {"issue_id": record["id"]}
-
-    def post_process(self, row: dict, context: dict | None = None) -> dict | None:  # noqa: ARG002
-        """Move these fields up so they can be used as replication keys."""
-        row["updated"] = row["fields"]["updated"]
-        row["created"] = row["fields"]["created"]
-
-        return row
 
 
 class PermissionStream(JiraStream):
@@ -1732,15 +1738,10 @@ class PermissionStream(JiraStream):
     name: stream name
     path: path which will be added to api url in client.py
     schema: instream schema
-    primary_keys = primary keys for the table
-    replication_key = datetime keys for replication
     """
 
     name = "permissions"
     path = "/permissions"
-    primary_keys = ("permissions",)
-    replication_key = "permissions"
-    replication_method = "INCREMENTAL"
     instance_name = ""
 
     schema = PropertiesList(
@@ -2377,6 +2378,7 @@ class SprintStream(JiraStream):
     """
 
     name = "sprints"
+    primary_keys = ("id",)
     parent_stream_type = BoardStream
     path = "/board/{board_id}/sprint?maxResults=100"
     replication_method = "INCREMENTAL"
@@ -2416,6 +2418,20 @@ class SprintStream(JiraStream):
             if transformed_record is None:
                 continue
             yield transformed_record
+
+    def validate_response(self, response: requests.Response) -> None:
+        """Validate the API response.
+
+        Allow for a 400 response if the board does not support sprints.
+        Do raise an error for other 400 responses.
+        """
+        if (
+            response.status_code == HTTPStatus.BAD_REQUEST
+            and "The board does not support sprints"
+            in response.json().get("errorMessages", [])
+        ):
+            return
+        super().validate_response(response)
 
 
 class ProjectRoleActorStream(JiraStream):
@@ -2969,24 +2985,31 @@ class WorkflowSearchStream(JiraStream):
 
     name = "workflow_searches"
     path = "/workflow/search"
-    primary_keys = ("id",)
+    primary_keys = ("name", "entityId")
     replication_key = "updated"
     replication_method = "INCREMENTAL"
     records_jsonpath = "$[values][*]"  # Or override `parse_response`.
     instance_name = "values"
 
     schema = PropertiesList(
-        Property(
-            "id",
-            ObjectType(
-                Property("name", StringType),
-                Property("entityId", StringType),
-            ),
-        ),
+        Property("name", StringType),
+        Property("entityId", StringType),
         Property("description", StringType),
         Property("created", StringType),
         Property("updated", StringType),
     ).to_dict()
+
+    def post_process(self, row: dict, context: dict | None) -> dict:  # noqa: ARG002
+        """Post-process the record before it is returned.
+
+        Flattens the id object into separate name and entityId fields.
+        """
+        if "id" in row:
+            # Extract values from the id object
+            id_obj = row.pop("id")
+            row["name"] = id_obj.get("name")
+            row["entityId"] = id_obj.get("entityId")
+        return row
 
 
 # Child Streams
