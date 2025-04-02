@@ -681,7 +681,7 @@ class IssueStream(JiraStream):
                 ),
                 Property("issuerestriction", StringType),
                 Property("lastViewed", StringType),
-                Property("created", DateTimeType),
+                Property("created", StringType),
                 Property(
                     "priority",
                     ObjectType(
@@ -873,7 +873,7 @@ class IssueStream(JiraStream):
                         Property("emailAddress", StringType),
                     ),
                 ),
-                Property("updated", DateTimeType),
+                Property("updated", StringType),
                 Property(
                     "status",
                     ObjectType(
@@ -1649,19 +1649,19 @@ class IssueStream(JiraStream):
                 additional_properties=False,
             ),
         ),
-        Property("created", DateTimeType),
-        Property("updated", DateTimeType),
         Property(
             "renderedFields",
             ObjectType(
                 Property("description", StringType),
             ),
         ),
+        Property("created", DateTimeType),
+        Property("updated", DateTimeType),
     ).to_dict()
 
     def get_url_params(
         self,
-        context: dict | None,
+        context: dict | None,  # noqa: ARG002
         next_page_token: t.Any | None,  # noqa: ANN401
     ) -> dict[str, t.Any]:
         """Return a dictionary of query parameters."""
