@@ -28,6 +28,16 @@ IntegerType = th.IntegerType
 NumberType = th.NumberType
 
 
+ADFRootBlockNode = ObjectType(
+    Property("type", StringType),
+    Property("version", IntegerType),
+    Property(
+        "content",
+        ArrayType(ObjectType(additional_properties=True)),
+    ),
+)
+
+
 class UsersStream(JiraStream):
     """Users stream.
 
@@ -3158,30 +3168,7 @@ class IssueComments(JiraStream):
         ),
         Property("created", DateTimeType),
         Property("updated", DateTimeType),
-        Property(
-            "body",
-            ObjectType(
-                Property("type", StringType),
-                Property("version", IntegerType),
-                Property(
-                    "content",
-                    ArrayType(
-                        ObjectType(
-                            Property("type", StringType),
-                            Property(
-                                "content",
-                                ArrayType(
-                                    ObjectType(
-                                        Property("type", StringType),
-                                        Property("text", StringType),
-                                    ),
-                                ),
-                            ),
-                        ),
-                    ),
-                ),
-            ),
-        ),
+        Property("body", ADFRootBlockNode),
         Property(
             "updateAuthor",
             ObjectType(
