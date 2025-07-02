@@ -3153,6 +3153,8 @@ class IssueComments(JiraStream):
 
     next_page_token_jsonpath = None  # type: ignore[assignment]
 
+    state_partitioning_keys = []
+
     schema = PropertiesList(
         Property("id", StringType),
         Property("issueId", StringType),
