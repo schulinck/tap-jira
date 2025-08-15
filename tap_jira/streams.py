@@ -6,6 +6,7 @@ import functools
 import operator
 import typing as t
 from http import HTTPStatus
+from zoneinfo import ZoneInfo
 
 from singer_sdk import typing as th  # JSON Schema typing helpers
 from singer_sdk.pagination import JSONPathPaginator
@@ -397,7 +398,7 @@ class IssueStream(JiraStream):
     name = "issues"
     path = "/search/jql"
     primary_keys = ("id",)
-    replication_key = "id"
+    replication_key = "updated"
     replication_method = "INCREMENTAL"
     records_jsonpath = "$[issues][*]"  # Or override `parse_response`.
     next_page_token_jsonpath = "$.nextPageToken"  # noqa: S105
@@ -1659,8 +1660,14 @@ class IssueStream(JiraStream):
                 additional_properties=True,
             ),
         ),
-        Property("created", StringType),
-        Property("updated", StringType),
+        Property(
+            "renderedFields",
+            ObjectType(
+                Property("description", StringType),
+            ),
+        ),
+        Property("created", DateTimeType),
+        Property("updated", DateTimeType),
     ).to_dict()
 
     def get_new_paginator(self) -> JSONPathPaginator:
@@ -1679,8 +1686,18 @@ class IssueStream(JiraStream):
         params["fields"] = (
             self.config.get("stream_options", {}).get("issues", {}).get("fields")
         )
+        params["expand"] = "renderedFields"
 
         jql: list[str] = []
+
+        replication_value = self.get_starting_timestamp(context)
+        if replication_value:
+            timezone_name = self.config["tz"] or "UTC"
+            tz = ZoneInfo(timezone_name)
+            formatted_replication_value = replication_value.astimezone(tz).strftime(
+                "%Y-%m-%d %H:%M",
+            )
+            jql.append(f"(updated >= '{formatted_replication_value}')")
 
         if next_page_token:
             params["nextPageToken"] = next_page_token
@@ -1702,15 +1719,21 @@ class IssueStream(JiraStream):
 
         params["jql"] = " and ".join(jql) + f" order by {self.replication_key} asc"
 
+        self.logger.info("QUERY PARAMS: %s", params)
+
         return params
 
     def post_process(self, row: Record, context: Context | None = None) -> Record:  # noqa: ARG002
         """Post-process the record.
 
-        - Add top-level `created` field.
+        - Add top-level `created` and `updated` fields.
         """
         created = row.get("fields", {}).pop("created", None)
+        updated = row.get("fields", {}).pop("updated", None)
+
         row["created"] = created
+        row["updated"] = updated
+
         return row
 
     def get_child_context(self, record: dict, context: dict | None) -> dict:  # noqa: ARG002
@@ -3123,7 +3146,7 @@ class IssueComments(JiraStream):
 
     ignore_parent_replication_keys = True
 
-    path = "/issue/{issue_id}/comment"
+    path = "/issue/{issue_id}/comment?expand=renderedBody"
 
     primary_keys = ("id",)
 
@@ -3132,6 +3155,8 @@ class IssueComments(JiraStream):
     instance_name = "comments"
 
     next_page_token_jsonpath = None  # type: ignore[assignment]
+
+    state_partitioning_keys = []
 
     schema = PropertiesList(
         Property("id", StringType),
@@ -3158,6 +3183,8 @@ class IssueComments(JiraStream):
                 Property("active", BooleanType),
             ),
         ),
+        Property("renderedBody", StringType),
+        Property("jsdPublic", BooleanType),
     ).to_dict()
 
     def post_process(self, row: dict, context: dict) -> dict:

@@ -25,6 +25,11 @@ class TapJira(Tap):
             description="Latest record date to sync",
         ),
         th.Property(
+            "tz",
+            th.StringType,
+            description="Timezone to use when JQL filtering by time",
+        ),
+        th.Property(
             "domain",
             th.StringType,
             description="The Domain for your Jira account, e.g. meltano.atlassian.net",
