@@ -27,7 +27,7 @@ class JiraStream(RESTStream):
     def url_base(self) -> str:
         """Returns base url."""
         domain = self.config["domain"]
-        return f"https://{domain}:443/rest/api/3"
+        return f"https://{domain}/rest/api/3"
 
     @property
     def authenticator(self) -> _Auth:
