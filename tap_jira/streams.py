@@ -1692,9 +1692,19 @@ class IssueStream(JiraStream):
             .get("issues", {})
             .get("fields", "*all")
         )
+        params["expand"] = "renderedFields"
 
         jql: list[str] = []
         params["expand"] = "renderedFields"
+
+        replication_value = self.get_starting_timestamp(context)
+        if replication_value:
+            timezone_name = self.config["tz"] or "UTC"
+            tz = ZoneInfo(timezone_name)
+            formatted_replication_value = replication_value.astimezone(tz).strftime(
+                "%Y-%m-%d %H:%M",
+            )
+            jql.append(f"(updated >= '{formatted_replication_value}')")
 
         replication_value = self.get_starting_timestamp(context)
         if replication_value:
