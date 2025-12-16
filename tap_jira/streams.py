@@ -4,16 +4,24 @@ from __future__ import annotations
 
 import functools
 import operator
-import typing as t
+import sys
 from http import HTTPStatus
+from typing import TYPE_CHECKING, Any
 from zoneinfo import ZoneInfo
 
 from singer_sdk import typing as th  # JSON Schema typing helpers
 from singer_sdk.pagination import JSONPathPaginator
 
-from tap_jira.client import JiraStream
+from tap_jira.client import JiraStartAtPaginatedStream, JiraStream
 
-if t.TYPE_CHECKING:
+if sys.version_info >= (3, 12):
+    from typing import override
+else:
+    from typing_extensions import override
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+
     import requests
     from singer_sdk.helpers.types import Context, Record
 
@@ -39,7 +47,7 @@ ADFRootBlockNode = ObjectType(
 )
 
 
-class UsersStream(JiraStream):
+class UsersStream(JiraStartAtPaginatedStream):
     """Users stream.
 
     https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-users/#api-rest-api-3-user-get
@@ -82,11 +90,12 @@ class UsersStream(JiraStream):
         Property("locale", StringType),
     ).to_dict()
 
+    @override
     def get_next_page_token(
         self,
         response: requests.Response,
-        previous_token: t.Any | None,  # noqa: ANN401
-    ) -> t.Any | None:  # noqa: ANN401
+        previous_token: int | None,
+    ) -> int | None:
         """Return a token for identifying next page or None if no more pages."""
         # If pagination is required, return a token which can be used to get the
         #       next page. If this is the final page, return "None" to end the
@@ -102,7 +111,7 @@ class UsersStream(JiraStream):
         return previous_token + len(page)
 
 
-class FieldStream(JiraStream):
+class FieldStream(JiraStartAtPaginatedStream):
     """Field stream.
 
     https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-fields/#api-rest-api-3-field-get
@@ -133,7 +142,7 @@ class FieldStream(JiraStream):
         Property("orderable", BooleanType),
         Property("navigable", BooleanType),
         Property("searchable", BooleanType),
-        Property("clauseNames", ArrayType(StringType)),
+        Property("clauseNames", ArrayType(StringType)),  # ty: ignore[invalid-argument-type]
         Property(
             "scope",
             ObjectType(
@@ -168,7 +177,7 @@ class FieldStream(JiraStream):
     ).to_dict()
 
 
-class ServerInfoStream(JiraStream):
+class ServerInfoStream(JiraStartAtPaginatedStream):
     """Server info stream.
 
     https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-server-info/#api-rest-api-3-serverinfo-get
@@ -192,7 +201,7 @@ class ServerInfoStream(JiraStream):
     schema = PropertiesList(
         Property("baseUrl", StringType),
         Property("version", StringType),
-        Property("versionNumbers", ArrayType(IntegerType)),
+        Property("versionNumbers", ArrayType(IntegerType)),  # ty: ignore[invalid-argument-type]
         Property("deploymentType", StringType),
         Property("buildNumber", IntegerType),
         Property("buildDate", StringType),
@@ -208,7 +217,7 @@ class ServerInfoStream(JiraStream):
     ).to_dict()
 
 
-class IssueTypeStream(JiraStream):
+class IssueTypeStream(JiraStartAtPaginatedStream):
     """Issue type stream.
 
     https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-types/#api-rest-api-3-issuetype-get
@@ -258,7 +267,7 @@ class IssueTypeStream(JiraStream):
     ).to_dict()
 
 
-class WorkflowStatusStream(JiraStream):
+class WorkflowStatusStream(JiraStartAtPaginatedStream):
     """Workflow status stream.
 
     https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-workflow-statuses/#api-rest-api-3-status-get
@@ -311,7 +320,7 @@ class WorkflowStatusStream(JiraStream):
     ).to_dict()
 
 
-class ProjectStream(JiraStream):
+class ProjectStream(JiraStartAtPaginatedStream):
     """Project stream.
 
     https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-projects/#api-rest-api-3-project-get
@@ -380,7 +389,7 @@ class ProjectStream(JiraStream):
     ).to_dict()
 
 
-class IssueStream(JiraStream):
+class IssueStream(JiraStream[str]):
     """Issue stream.
 
     https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-search/#api-rest-api-3-search-jql-get
@@ -418,7 +427,7 @@ class IssueStream(JiraStream):
                     Property("timestamp", StringType),
                     Property(
                         "colwidth",
-                        ArrayType(IntegerType),
+                        ArrayType(IntegerType),  # ty: ignore[invalid-argument-type]
                     ),
                     Property("language", StringType),
                     Property("background", StringType),
@@ -471,7 +480,7 @@ class IssueStream(JiraStream):
                                 ),
                                 Property(
                                     "colwidth",
-                                    ArrayType(IntegerType),
+                                    ArrayType(IntegerType),  # ty: ignore[invalid-argument-type]
                                 ),
                                 Property(
                                     "language",
@@ -703,10 +712,10 @@ class IssueStream(JiraStream):
                         Property("id", StringType),
                     ),
                 ),
-                Property("labels", ArrayType(StringType)),
+                Property("labels", ArrayType(StringType)),  # ty: ignore[invalid-argument-type]
                 Property("timeestimate", IntegerType),
                 Property("aggregatetimeoriginalestimate", IntegerType),
-                Property("versions", ArrayType(StringType)),
+                Property("versions", ArrayType(StringType)),  # ty: ignore[invalid-argument-type]
                 Property(
                     "issuelinks",
                     ArrayType(
@@ -940,7 +949,7 @@ class IssueStream(JiraStream):
                                             Property("alt", StringType),
                                             Property(
                                                 "colwidth",
-                                                ArrayType(IntegerType),
+                                                ArrayType(IntegerType),  # ty: ignore[invalid-argument-type]
                                             ),
                                             Property("background", StringType),
                                             Property("color", StringType),
@@ -990,7 +999,7 @@ class IssueStream(JiraStream):
                                                         ),
                                                         Property(
                                                             "colwidth",
-                                                            ArrayType(IntegerType),
+                                                            ArrayType(IntegerType),  # ty: ignore[invalid-argument-type]
                                                         ),
                                                         Property(
                                                             "background",
@@ -1059,7 +1068,7 @@ class IssueStream(JiraStream):
                                                         ),
                                                         Property(
                                                             "colwidth",
-                                                            ArrayType(IntegerType),
+                                                            ArrayType(IntegerType),  # ty: ignore[invalid-argument-type]
                                                         ),
                                                         Property(
                                                             "language",
@@ -1136,7 +1145,7 @@ class IssueStream(JiraStream):
                                                                     ),
                                                                     Property(
                                                                         "colwidth",
-                                                                        ArrayType(
+                                                                        ArrayType(  # ty: ignore[invalid-argument-type]
                                                                             IntegerType,
                                                                         ),
                                                                     ),
@@ -1270,7 +1279,7 @@ class IssueStream(JiraStream):
                                                                                 ),
                                                                                 Property(
                                                                                     "colwidth",
-                                                                                    ArrayType(
+                                                                                    ArrayType(  # ty: ignore[invalid-argument-type]
                                                                                         IntegerType,
                                                                                     ),
                                                                                 ),
@@ -1385,7 +1394,7 @@ class IssueStream(JiraStream):
                                                                                             ),
                                                                                             Property(
                                                                                                 "colwidth",
-                                                                                                ArrayType(
+                                                                                                ArrayType(  # ty: ignore[invalid-argument-type]
                                                                                                     IntegerType,
                                                                                                 ),
                                                                                             ),
@@ -1674,17 +1683,19 @@ class IssueStream(JiraStream):
         Property("updated", DateTimeType),
     ).to_dict()
 
+    @override
     def get_new_paginator(self) -> JSONPathPaginator:
         """Return a new paginator for this stream."""
         return JSONPathPaginator(jsonpath=self.next_page_token_jsonpath)
 
-    def get_url_params(
+    @override
+    def get_url_params(  # ty: ignore[invalid-method-override]
         self,
-        context: dict | None,  # noqa: ARG002
-        next_page_token: t.Any | None,  # noqa: ANN401
-    ) -> dict[str, t.Any]:
+        context: Context | None,
+        next_page_token: str | None,
+    ) -> dict[str, Any]:
         """Return a dictionary of query parameters."""
-        params: dict = {}
+        params: dict[str, Any] = {}
 
         params["maxResults"] = self.config.get("page_size", {}).get("issues", 10)
         params["fields"] = (
@@ -1739,7 +1750,8 @@ class IssueStream(JiraStream):
 
         return params
 
-    def post_process(self, row: Record, context: Context | None = None) -> Record:  # noqa: ARG002
+    @override
+    def post_process(self, row: Record, context: Context | None = None) -> Record:
         """Post-process the record.
 
         - Add top-level `created` and `updated` fields.
@@ -1752,12 +1764,13 @@ class IssueStream(JiraStream):
 
         return row
 
-    def get_child_context(self, record: dict, context: dict | None) -> dict:  # noqa: ARG002
+    @override
+    def get_child_context(self, record: Record, context: Context | None) -> Context:
         """Return a context dictionary for child streams."""
         return {"issue_id": record["id"]}
 
 
-class PermissionStream(JiraStream):
+class PermissionStream(JiraStartAtPaginatedStream):
     """Permission stream.
 
     https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-permissions/#api-rest-api-3-permissions-get
@@ -2178,7 +2191,7 @@ class PermissionStream(JiraStream):
     ).to_dict()
 
 
-class ProjectRoleStream(JiraStream):
+class ProjectRoleStream(JiraStartAtPaginatedStream):
     """Project role stream.
 
     https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-project-roles/#api-rest-api-3-role-get
@@ -2244,7 +2257,7 @@ class ProjectRoleStream(JiraStream):
     ).to_dict()
 
 
-class PriorityStream(JiraStream):
+class PriorityStream(JiraStartAtPaginatedStream):
     """Priority stream.
 
     https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-priorities/#api-rest-api-3-priority-get
@@ -2275,7 +2288,7 @@ class PriorityStream(JiraStream):
     ).to_dict()
 
 
-class PermissionHolderStream(JiraStream):
+class PermissionHolderStream(JiraStartAtPaginatedStream):
     """Permission holder stream.
 
     https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-permission-schemes/#api-rest-api-3-permissionscheme-get
@@ -2338,7 +2351,7 @@ class PermissionHolderStream(JiraStream):
     ).to_dict()
 
 
-class BoardStream(JiraStream):
+class BoardStream(JiraStartAtPaginatedStream):
     """Board stream.
 
     https://developer.atlassian.com/cloud/jira/platform/jira-expressions-type-reference/#sprint
@@ -2379,18 +2392,20 @@ class BoardStream(JiraStream):
         ),
     ).to_dict()
 
+    @override
     @property
     def url_base(self) -> str:
         """Return the base URL for the API requests."""
         domain = self.config["domain"]
         return f"https://{domain}:443/rest/agile/1.0"
 
-    def get_child_context(self, record: dict, context: dict | None) -> dict:  # noqa: ARG002
+    @override
+    def get_child_context(self, record: Record, context: Context | None) -> Context:
         """Return a context dictionary for child streams."""
         return {"board_id": record["id"]}
 
 
-class SprintStream(JiraStream):
+class SprintStream(JiraStartAtPaginatedStream):
     """Sprint stream.
 
     * https://developer.atlassian.com/cloud/jira/software/rest/api-group-board/#api-rest-agile-1-0-board-boardid-sprint-get
@@ -2428,19 +2443,26 @@ class SprintStream(JiraStream):
         Property("boardId", IntegerType),
     ).to_dict()
 
+    @override
     @property
     def url_base(self) -> str:
         """Return the base URL for the API requests."""
         domain = self.config["domain"]
         return f"https://{domain}:443/rest/agile/1.0"
 
-    def post_process(self, row: dict, context: dict | None) -> dict:
+    @override
+    def post_process(
+        self,
+        row: Record,
+        context: Context | None = None,
+    ) -> Record | None:
         """Post-process the record before it is returned."""
         if context:
             row["boardId"] = context["board_id"]
         return row
 
-    def get_records(self, context: dict | None) -> t.Iterable[dict[str, t.Any]]:
+    @override
+    def get_records(self, context: Context | None) -> Iterable[Record]:
         """Get records from the API response."""
         for record in self.request_records(context):
             transformed_record = self.post_process(record, context)
@@ -2448,6 +2470,7 @@ class SprintStream(JiraStream):
                 continue
             yield transformed_record
 
+    @override
     def validate_response(self, response: requests.Response) -> None:
         """Validate the API response.
 
@@ -2463,7 +2486,7 @@ class SprintStream(JiraStream):
         super().validate_response(response)
 
 
-class ProjectRoleActorStream(JiraStream):
+class ProjectRoleActorStream(JiraStartAtPaginatedStream):
     """Project role actor stream.
 
     https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-project-role-actors/#api-rest-api-3-role-id-actors-get
@@ -2520,7 +2543,8 @@ class ProjectRoleActorStream(JiraStream):
         ),
     ).to_dict()
 
-    def get_records(self, context: dict | None) -> t.Iterable[dict[str, t.Any]]:
+    @override
+    def get_records(self, context: Context | None) -> Iterable[Record]:
         """Get records from the API response.
 
         Takes each of the role ID's gathered above and adds to a list, then loops
@@ -2541,7 +2565,7 @@ class ProjectRoleActorStream(JiraStream):
             for role in role_id:
                 try:
 
-                    class ProjectRoleActor(JiraStream):
+                    class ProjectRoleActor(JiraStartAtPaginatedStream):
                         role_id = role
                         project_id = pid
                         name = "project_role_actor"
@@ -2567,7 +2591,7 @@ class ProjectRoleActorStream(JiraStream):
         )
 
 
-class AuditingStream(JiraStream):
+class AuditingStream(JiraStartAtPaginatedStream):
     """Auditing stream.
 
     https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-audit-records/#api-rest-api-3-auditing-record-get
@@ -2632,7 +2656,7 @@ class AuditingStream(JiraStream):
     ).to_dict()
 
 
-class DashboardStream(JiraStream):
+class DashboardStream(JiraStartAtPaginatedStream):
     """Dashboard stream.
 
     https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-dashboards/#api-rest-api-3-dashboard-get
@@ -2680,7 +2704,7 @@ class DashboardStream(JiraStream):
     ).to_dict()
 
 
-class FilterSearchStream(JiraStream):
+class FilterSearchStream(JiraStartAtPaginatedStream):
     """Filter search stream.
 
     https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-filters/#api-rest-api-3-filter-search-get
@@ -2709,7 +2733,7 @@ class FilterSearchStream(JiraStream):
     ).to_dict()
 
 
-class FilterDefaultShareScopeStream(JiraStream):
+class FilterDefaultShareScopeStream(JiraStartAtPaginatedStream):
     """Filter default share scope stream.
 
     https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-filter-sharing/#api-rest-api-3-filter-defaultsharescope-get
@@ -2735,7 +2759,7 @@ class FilterDefaultShareScopeStream(JiraStream):
     ).to_dict()
 
 
-class GroupsPickerStream(JiraStream):
+class GroupsPickerStream(JiraStartAtPaginatedStream):
     """Groups picker stream.
 
     https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-groups/#api-rest-api-3-groups-picker-get
@@ -2775,7 +2799,7 @@ class GroupsPickerStream(JiraStream):
     ).to_dict()
 
 
-class LicenseStream(JiraStream):
+class LicenseStream(JiraStartAtPaginatedStream):
     """License stream.
 
     https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-license-metrics/#api-rest-api-3-instance-license-get
@@ -2804,7 +2828,7 @@ class LicenseStream(JiraStream):
     ).to_dict()
 
 
-class ScreensStream(JiraStream):
+class ScreensStream(JiraStartAtPaginatedStream):
     """Screens stream.
 
     https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-screens/#api-rest-api-3-screens-get
@@ -2846,7 +2870,7 @@ class ScreensStream(JiraStream):
     ).to_dict()
 
 
-class ScreenSchemesStream(JiraStream):
+class ScreenSchemesStream(JiraStartAtPaginatedStream):
     """Screen schemes stream.
 
     https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-screen-tab-fields/#api-rest-api-3-screens-screenid-tabs-tabid-fields-get
@@ -2883,7 +2907,7 @@ class ScreenSchemesStream(JiraStream):
     ).to_dict()
 
 
-class StatusesSearchStream(JiraStream):
+class StatusesSearchStream(JiraStartAtPaginatedStream):
     """Statuses search stream.
 
     https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-screen-tab-fields/#api-rest-api-3-screens-screenid-tabs-tabid-fields-get
@@ -2915,12 +2939,12 @@ class StatusesSearchStream(JiraStream):
             ObjectType(Property("type", StringType)),
         ),
         Property("description", StringType),
-        Property("usages", ArrayType(StringType)),
-        Property("workflowUsages", ArrayType(StringType)),
+        Property("usages", ArrayType(StringType)),  # ty: ignore[invalid-argument-type]
+        Property("workflowUsages", ArrayType(StringType)),  # ty: ignore[invalid-argument-type]
     ).to_dict()
 
 
-class WorkflowStream(JiraStream):
+class WorkflowStream(JiraStartAtPaginatedStream):
     """Workflow stream.
 
     https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-workflows/#api-rest-api-3-workflow-get
@@ -2964,7 +2988,7 @@ class WorkflowStream(JiraStream):
     ).to_dict()
 
 
-class Resolutions(JiraStream):
+class Resolutions(JiraStartAtPaginatedStream):
     """Resolution stream.
 
     https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-resolutions/#api-rest-api-3-resolution-get
@@ -2997,7 +3021,7 @@ class Resolutions(JiraStream):
     ).to_dict()
 
 
-class WorkflowSearchStream(JiraStream):
+class WorkflowSearchStream(JiraStartAtPaginatedStream):
     """Workflow search stream.
 
     https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-workflows/#api-rest-api-3-workflow-get
@@ -3028,11 +3052,9 @@ class WorkflowSearchStream(JiraStream):
         Property("updated", StringType),
     ).to_dict()
 
-    def post_process(self, row: dict, context: dict | None) -> dict:  # noqa: ARG002
-        """Post-process the record before it is returned.
-
-        Flattens the id object into separate name and entityId fields.
-        """
+    @override
+    def post_process(self, row: Record, context: Context | None = None) -> Record:
+        """Post-process the record before it is returned."""
         if "id" in row:
             # Extract values from the id object
             id_obj = row.pop("id")
@@ -3044,7 +3066,7 @@ class WorkflowSearchStream(JiraStream):
 # Child Streams
 
 
-class IssueWatchersStream(JiraStream):
+class IssueWatchersStream(JiraStartAtPaginatedStream):
     """Issue Watchers.
 
     https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-workflows/#api-rest-api-3-workflow-get
@@ -3075,13 +3097,15 @@ class IssueWatchersStream(JiraStream):
         Property("issueId", StringType),
     ).to_dict()
 
-    def post_process(self, row: dict, context: dict) -> dict:
+    @override
+    def post_process(self, row: Record, context: Context | None = None) -> Record:
         """Post-process the record before it is returned."""
+        assert context is not None  # noqa: S101
         row["issueId"] = context["issue_id"]
         return row
 
 
-class IssueChangeLogStream(JiraStream):
+class IssueChangeLogStream(JiraStartAtPaginatedStream):
     """Issue Change Log.
 
     https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-workflows/#api-rest-api-3-workflow-get
@@ -3135,13 +3159,15 @@ class IssueChangeLogStream(JiraStream):
         ),
     ).to_dict()
 
-    def post_process(self, row: dict, context: dict) -> dict:
+    @override
+    def post_process(self, row: Record, context: Context | None = None) -> Record:
         """Post-process the record before it is returned."""
+        assert context is not None  # noqa: S101
         row["issueId"] = context["issue_id"]
         return row
 
 
-class IssueComments(JiraStream):
+class IssueComments(JiraStartAtPaginatedStream):
     """Issue Comments.
 
     https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-comments/#api-rest-api-3-issue-issueidorkey-comment-get
@@ -3203,13 +3229,15 @@ class IssueComments(JiraStream):
         Property("jsdPublic", BooleanType),
     ).to_dict()
 
-    def post_process(self, row: dict, context: dict) -> dict:
+    @override
+    def post_process(self, row: Record, context: Context | None = None) -> Record:
         """Post-process the record before it is returned."""
+        assert context is not None  # noqa: S101
         row["issueId"] = context["issue_id"]
         return row
 
 
-class IssueWorklogs(JiraStream):
+class IssueWorklogs(JiraStartAtPaginatedStream):
     """Issue Worklogs.
 
     https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-comments/#api-rest-api-3-issue-issueidorkey-comment-get
