@@ -65,6 +65,15 @@ class TapJira(Tap):
             required=True,
         ),
         th.Property(
+            "cloud_id",
+            th.StringType,
+            description=(
+                "The Cloud ID for your Jira account. Optional - if provided, "
+                "uses cloud-based API URLs instead of domain-based URLs."
+            ),
+            required=False,
+        ),
+        th.Property(
             "page_size",
             th.ObjectType(
                 th.Property(
@@ -123,9 +132,12 @@ class TapJira(Tap):
         stream_list: list[JiraStream[Any]] = [
             streams.UsersStream(self),
             streams.FieldStream(self),
+            streams.CustomFieldContextStream(self),
+            streams.CustomFieldOptionStream(self),
             streams.ServerInfoStream(self),
             streams.IssueTypeStream(self),
             streams.ProjectStream(self),
+            streams.ProjectVersionStream(self),
             streams.WorkflowStatusStream(self),
             streams.IssueStream(self),
             streams.PermissionStream(self),
@@ -135,21 +147,21 @@ class TapJira(Tap):
             streams.SprintStream(self),
             streams.ProjectRoleActorStream(self),
             streams.DashboardStream(self),
-            streams.FilterSearchStream(self),
+            streams.FilterStream(self),
             streams.FilterDefaultShareScopeStream(self),
             streams.GroupsPickerStream(self),
             streams.LicenseStream(self),
             streams.ScreensStream(self),
             streams.ScreenSchemesStream(self),
-            streams.StatusesSearchStream(self),
+            streams.StatusStream(self),
             streams.WorkflowStream(self),
-            streams.WorkflowSearchStream(self),
             streams.Resolutions(self),
             streams.IssueChangeLogStream(self),
             streams.IssueComments(self),
             streams.BoardStream(self),
             streams.IssueWatchersStream(self),
             streams.IssueWorklogs(self),
+            streams.ComponentStream(self),
         ]
 
         if self.config.get("include_audit_logs", False):
