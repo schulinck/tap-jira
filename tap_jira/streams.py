@@ -3440,9 +3440,9 @@ class IssueComments(JiraStartAtPaginatedStream):
 
     state_partitioning_keys = ()  # type: ignore[assignment]
 
-    ignore_parent_replication_keys = True
-
     path = "/issue/{issue_id}/comment?expand=renderedBody"
+
+    ignore_parent_replication_keys = True
 
     primary_keys = ("id",)
 
