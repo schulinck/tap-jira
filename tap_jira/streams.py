@@ -1874,20 +1874,13 @@ class IssueStream(JiraStream[str]):
 
         jql: list[str] = []
 
-        replication_value = self.get_starting_timestamp(context)
-        if replication_value:
-            timezone_name = self.config["tz"] or "UTC"
-            tz = ZoneInfo(timezone_name)
-            formatted_replication_value = replication_value.astimezone(tz).strftime(
-                "%Y-%m-%d %H:%M",
-            )
-            jql.append(f"(updated >= '{formatted_replication_value}')")
-
         if next_page_token:
             params["nextPageToken"] = next_page_token
 
         if start_date := self.get_starting_timestamp(context):
-            start_date_fmt = start_date.strftime("%Y-%m-%d %H:%M")
+            timezone_name = self.config["tz"] or "UTC"
+            tz = ZoneInfo(timezone_name)
+            start_date_fmt = start_date.astimezone(tz).strftime("%Y-%m-%d %H:%M")
 
             jql.append(f"(created>='{start_date_fmt}' or updated>='{start_date_fmt}')")
 
